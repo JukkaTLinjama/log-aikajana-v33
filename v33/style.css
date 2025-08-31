@@ -1,0 +1,124 @@
+:root {
+    --bg: #0b0b0c;
+    --fg: #e6e6e6;
+    --muted: #9aa0a6;
+    --accent: #ff8c42;
+    --card: #1a1b1e;
+    --cardText: #f3f3f3;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+#page-title {
+    margin: 0.5em 1em;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+#info-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    width: 28px;
+    height: 28px;
+    text-align: center;
+    line-height: 26px;
+    border-radius: 6px;
+    user-select: none;
+}
+
+#info-box {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    display: none;
+    max-width: 240px;
+    padding: 8px 12px;
+    background: rgba(40, 40, 40, 0.95);
+    border: 1px solid #555;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#timeline-container {
+    height: 85vh;
+    margin: 0 8px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+#timeline {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: pan-y;
+}
+
+#page-footer {
+    text-align: center;
+    font-size: 0.7em;
+    color: var(--muted);
+    padding: 6px;
+}
+
+/* Kortit ja akselit */
+.axis line,
+.axis path {
+    stroke: #444;
+}
+
+.axis text {
+    fill: #c9c9c9;
+    font-size: 12px;
+}
+
+.zoomBar .track {
+    fill: #222;
+}
+
+.zoomBar .window {
+    fill: var(--accent);
+    opacity: .25;
+    stroke: var(--accent);
+}
+
+.card-group rect.card {
+    fill: var(--card);
+    stroke: #2a2c30;
+    rx: 8;
+    ry: 8;
+}
+
+.card-group text {
+    fill: var(--cardText);
+    font-size: 12px;
+}
+
+@media (max-width: 480px) {
+    #page-title {
+        font-size: 1.1em;
+    }
+
+    .axis text,
+    .card-group text {
+        font-size: 11px;
+    }
+}
