@@ -1,0 +1,466 @@
+{
+  "metadata": {
+    "version": "1.6",
+    "author": "ChatGPT (muunnettu nykyhetkestä)",
+    "updated": "20250804"
+  },
+  "events": [
+    {
+      "theme": "kosmos",
+      "events": [
+        {
+          "label": "Alkuräjähdys",
+          "year": "13.8 mrd v",
+          "time_years": 13800000000,
+          "log": 17.64,
+          "author": "",
+          "ref": "",
+          "comments": "test comment\ntoinen rivi"
+        },
+        {
+          "label": "Ensimmäiset tähdet",
+          "year": "13.2 mrd v",
+          "time_years": 13200000000,
+          "log": 17.52,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset galaksit",
+          "year": "12.5 mrd v",
+          "time_years": 12500000000,
+          "log": 17.4,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Aurinkokunta syntyy",
+          "year": "4.6 mrd v",
+          "time_years": 4600000000,
+          "log": 17.16,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Maa muodostuu",
+          "year": "4.5 mrd v",
+          "time_years": 4540000000,
+          "log": 17.15,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset vesimassat",
+          "year": "4.4 mrd v",
+          "time_years": 4400000000,
+          "log": 17.14,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset elämän merkit",
+          "year": "3.8 mrd v",
+          "time_years": 3800000000,
+          "log": 17.08,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        }
+      ]
+    },
+    {
+      "theme": "biologia",
+      "events": [
+        {
+          "label": "Elämän synty",
+          "year": "3.8 mrd v",
+          "time_years": 3800000000,
+          "log": 17.08,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Fotosynteesi",
+          "year": "2.8 mrd v",
+          "time_years": 2800000000,
+          "log": 16.95,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset prokaryootit",
+          "year": "3.7 mrd v",
+          "time_years": 3700000000,
+          "log": 17.07,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Eukaryootit",
+          "year": "2.0 mrd v",
+          "time_years": 2000000000,
+          "log": 16.8,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Monisoluiset",
+          "year": "1.0 mrd v",
+          "time_years": 1000000000,
+          "log": 16.5,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Kambrikauden räjähdys",
+          "year": "500.0 milj. v",
+          "time_years": 500000000,
+          "log": 16.2,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset selkärankaiset",
+          "year": "400.0 milj. v",
+          "time_years": 400000000,
+          "log": 16.1,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset matelijat",
+          "year": "300.0 milj. v",
+          "time_years": 300000000,
+          "log": 15.78,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset nisäkkäät",
+          "year": "200.0 milj. v",
+          "time_years": 200000000,
+          "log": 15.3,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Dinosaurukset kuolevat sukupuuttoon",
+          "year": "66.0 milj. v",
+          "time_years": 66000000,
+          "log": 15.32,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Nisäkkäiden nousu alkaa",
+          "year": "65.0 milj. v",
+          "time_years": 65000000,
+          "log": 15.31,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Kädelliset kehittyvät",
+          "year": "55.0 milj. v",
+          "time_years": 55000000,
+          "log": 15.24,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Varhaisimmat ihmisapinat",
+          "year": "20.0 milj. v",
+          "time_years": 20000000,
+          "log": 14.8,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Hominidien ja simpanssien sukulinjat eroavat",
+          "year": "6.0 milj. v",
+          "time_years": 6000000,
+          "log": 14.28,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Australopithecus kehittyy",
+          "year": "4.0 milj. v",
+          "time_years": 4000000,
+          "log": 14.1,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        }
+      ]
+    },
+    {
+      "theme": "ihmiskunta",
+      "events": [
+        {
+          "label": "Varhaiset kivityökalut (Oldowan)",
+          "year": "2.6 milj. v",
+          "time_years": 2600000,
+          "log": 13.91,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Homo erectus käyttää tulta",
+          "year": "1.5 milj. v",
+          "time_years": 1500000,
+          "log": 13.67,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Homo sapiens ilmestyy",
+          "year": "300 tuhatta v",
+          "time_years": 300000,
+          "log": 12.98,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Homo sapiens laajenee",
+          "year": "100 tuhatta v",
+          "time_years": 100000,
+          "log": 12.5,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        }
+      ]
+    },
+    {
+      "theme": "historia",
+      "events": [
+        {
+          "label": "Ensimmäiset symboliset merkit ja taide",
+          "year": "100 tuhatta v",
+          "time_years": 100000,
+          "log": 12.5,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Neoliittinen vallankumous (maanviljely)",
+          "year": "10 tuhatta v",
+          "time_years": 9500,
+          "log": 11.48,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäiset kaupungit",
+          "year": "6 tuhatta v",
+          "time_years": 6300,
+          "log": 11.3,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Egyptin pyramidit",
+          "year": "4 tuhatta v",
+          "time_years": 4500,
+          "log": 11.15,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Kirjoitettu historia",
+          "year": "3 tuhatta v",
+          "time_years": 3200,
+          "log": 11,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Antiikin Kreikka ja filosofia",
+          "year": "2 tuhatta v",
+          "time_years": 2500,
+          "log": 10.9,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Rooman valtakunnan huippu",
+          "year": "2 tuhatta v",
+          "time_years": 2000,
+          "log": 10.8,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Varhaiskeskiaika ja viikingit",
+          "year": "1 tuhatta v",
+          "time_years": 1000,
+          "log": 10.5,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Gutenbergin kirjapaino",
+          "year": "580 v",
+          "time_years": 580,
+          "log": 10.26,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Kolumbus löytää Amerikan",
+          "year": "530 v",
+          "time_years": 530,
+          "log": 10.23,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Teollinen vallankumous",
+          "year": "250 v",
+          "time_years": 250,
+          "log": 9.9,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Ensimmäinen maailmansota",
+          "year": "110 v",
+          "time_years": 110,
+          "log": 9.54,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Toinen maailmansota",
+          "year": "80 v",
+          "time_years": 80,
+          "log": 9.4,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Vuosi 2000",
+          "year": "24 v",
+          "time_years": 24,
+          "log": 8.88,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        }
+      ]
+    },
+    {
+      "theme": "moderni teknologia",
+      "events": [
+        {
+          "label": "Tietokoneet ja informaatioaika alkaa",
+          "year": "75 v",
+          "time_years": 75,
+          "log": 9.37,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Internet syntyy",
+          "year": "32 v",
+          "time_years": 32,
+          "log": 9,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Älypuhelimet yleistyvät",
+          "year": "15 v",
+          "time_years": 15,
+          "log": 8.68,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Sosiaalinen media nousee",
+          "year": "10 v",
+          "time_years": 10,
+          "log": 8.5,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "Tekoälyn läpimurto",
+          "year": "5 v",
+          "time_years": 5,
+          "log": 8.2,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "1 vuosi sitten",
+          "year": "1 v",
+          "time_years": 1,
+          "log": 7.5,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "1 päivä sitten",
+          "year": "1 vrk",
+          "time_years": 0.0027,
+          "log": 4.94,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        },
+        {
+          "label": "1 sekunti sitten",
+          "year": "3.2e-08",
+          "time_years": 3.17e-8,
+          "log": 0,
+          "author": "",
+          "ref": "",
+          "comments": ""
+        }
+      ]
+    }
+  ]
+}
