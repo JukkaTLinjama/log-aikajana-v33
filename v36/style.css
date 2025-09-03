@@ -118,8 +118,8 @@ body {
     stroke-width: 1;
 }
 .minor-grid line {
-    stroke: #aaaaaa;
-    stroke-opacity: 0.35;    /* selvästi himmeämpi kuin major */
+    stroke: #d4d3d3;
+    stroke-opacity: 0.55;    /* selvästi himmeämpi kuin major */
     shape-rendering: crispEdges;
 }
 
@@ -221,4 +221,13 @@ footer {
 .zoomBar .hit {
     fill: transparent !important;
     opacity: 0 !important;
+}
+/* v36: globaali haalennuskerros */
+.global-dim-rect {
+    fill: #bcbbbb;
+    opacity: 0;
+    /* näkyy vain kun activeTheme on */
+    pointer-events: none;
+    /* klikkaukset menevät läpi passiivisiin kortteihin */
+    transition: opacity .12s ease;
 }

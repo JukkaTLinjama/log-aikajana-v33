@@ -111,11 +111,16 @@ body {
     fill: #c9c9c9;
     font-size: 11px;
 }
-
+/* v36: major-tickien viivat selkeämmiksi, mutta hillityt */
+.axis .tick line {
+    stroke: #cfcfcf;
+    stroke-opacity: 0.7;
+    stroke-width: 1;
+}
 .minor-grid line {
-    stroke: #aaa8a8;
-    stroke-opacity: 0.6;
-    /* himmennä tarvittaessa */
+    stroke: #d4d3d3;
+    stroke-opacity: 0.55;    /* selvästi himmeämpi kuin major */
+    shape-rendering: crispEdges;
 }
 
 .zoomBar .track {
@@ -124,11 +129,14 @@ body {
     pointer-events: none; /* ei blokkaa mitään */
 }
 
+/* v36: ikkuna ei peitä sisältöä — kevyempi & klikit läpi */
 .zoomBar .window {
     fill: var(--accent);
-    opacity: 0.65;
-    /* kirkkaampi alue */
+    opacity: 0.25;
+    /* aiempi 0.65 → häiritsemätön */
     stroke: var(--accent);
+    pointer-events: none;
+    /* varmistetaan ettei nappaa klikkejä */
 }
 
 .zoomBar .hit {
@@ -148,15 +156,6 @@ body {
     fill: #c2c0c0;
     font-size: 10px;
 }
-/* v35: tapahtumien teksti serif ja pienempi */
-.card-group text.event-label {
-    font-family: Georgia, "Times New Roman", serif;
-    /* kokeilu: serif */
-    font-size: 9px;
-    /* pienempi desktopilla */
-    letter-spacing: .1px;
-    /* pieni luettavuus-tweak */
-}
 
 /* v35: vielä pienempi mobiilissa */
 @media (max-width: 480px) {
@@ -166,7 +165,14 @@ body {
 }
 
 .event-label {
-    fill: #dedede;    /* tapahtumien tekstit */
+    fill: #dedede;
+    /* tapahtumien tekstit */
+    font-family: Georgia, "Times New Roman", serif;
+    /* pakota serif */
+        font-size: 9px;
+            /* pienempi desktopilla */
+            letter-spacing: .1px;
+            /* pieni luettavuus-tweak */
 }
 
 .card-title {
@@ -206,4 +212,22 @@ main,
 /* svg-alue ei työnnä footeria */
 footer {
     flex: 0 0 auto;
+}
+#plot-rect {
+    fill: none !important;
+    stroke: none !important;
+}
+
+.zoomBar .hit {
+    fill: transparent !important;
+    opacity: 0 !important;
+}
+/* v36: globaali haalennuskerros */
+.global-dim-rect {
+    fill: #bcbbbb;
+    opacity: 0;
+    /* näkyy vain kun activeTheme on */
+    pointer-events: none;
+    /* klikkaukset menevät läpi passiivisiin kortteihin */
+    transition: opacity .12s ease;
 }

@@ -1,4 +1,4 @@
-// timeline.js — v36
+// timeline.js — v36b
 // Huom: tämä korvaa aiemman katkenneen tiedoston. Kaikki nimet pidetty yksinkertaisina
 // ja "svg" yms. määritellään vain kerran, jotta "already been declared" ei tule.
 // Akseli = log(time_years). Ala = nykyhetki (1 vuosi), ylös = kaukaisempi menneisyys.
@@ -19,6 +19,7 @@
         minYears: .01, maxYears: 1e10,        // alustava; päivitetään datasta
         events: [],
         themes: [],
+        activeTheme: null, // v36: klikatun kortin teema
         themeColors: new Map()
     };
 
@@ -31,6 +32,13 @@
     const gAxis = gRoot.append("g").attr("class", "axis");
     const gCards = gRoot.append("g").attr("class", "cards");
     const gMinor = gRoot.append("g").attr("class", "minor-grid");
+    // v36: globaali haalennus ja aktiivikerros
+    const gDim = svg.append("g").attr("class", "dim");
+    const dimRect = gDim.append("rect")
+    .attr("class", "global-dim-rect")
+    .style("pointer-events", "none")  // ei blokkaa klikkejä
+    .style("fill", "#000");           // varmistetaan täyttö    
+    const gActive = svg.append("g").attr("class", "active-layer");        // tänne siirretään aktiivinen kortti
 
     // zoom bar oikealle
     const gZoomTrack = svg.insert("g", ".root").attr("class", "zoomBar"); // v35: tausta alle
@@ -49,12 +57,13 @@
     // v36: varmista kerrosjärjestys heti luontivaiheessa
     setZOrder();
 
-
     // --- apufunktiot ---
-    function setZOrder() {      // v35: eksplisiittinen kerrosjärjestys
-        gZoomTrack.lower();      // alin: taustaraita
-        gRoot.raise();           // kortit + akselit päälle
-        gZoom.raise();           // päällimmäiseksi: oranssi ikkuna + hitbox
+    function setZOrder() {
+        gZoomTrack.lower(); // alin: kapea zoombar-tausta
+        gRoot.raise();      // kaikki kortit & akseli (passiivinen sisältö)
+        gDim.raise();       // haalistuslayer passiivisen päälle
+        gActive.raise();    // aktiivinen kortti overlayn yläpuolelle
+        gZoom.raise();      // päällimmäisenä vain hitbox/drag
     }
 
     function layout() {
@@ -63,8 +72,9 @@
 
         // koko svg ja rootin paikka (akselille vasen marginaali)
         svg.attr("width", state.width).attr("height", state.height);
-        gRoot.attr("transform", `translate(${cfg.margin.left-24},${cfg.margin.top})`);
-
+        const rootTX = cfg.margin.left - 24;                 // sama siirto molemmille
+        gRoot.attr("transform", `translate(${rootTX},${cfg.margin.top})`);
+        gActive.attr("transform", `translate(${rootTX},${cfg.margin.top})`); // ← estää “hyppäyksen” vasemmalle
         // y-skaala: log(time_years): ala=nyky, ylös=menneisyys
         const innerH = innerHeight();
         state.yBase = d3.scaleLog().domain([state.minYears, state.maxYears]).range([0, innerH]); // menneisyys alas
@@ -78,6 +88,20 @@
 
         zoomBG.attr("x", 0).attr("y", 0).attr("width", cfg.zoomBar.width).attr("height", innerH);
         zoomWin.attr("x", 2).attr("width", cfg.zoomBar.width - 4).attr("y", 0).attr("height", innerH - 1);
+        // v36: klippireuna leveämmäksi (ylös ja alas) → korttien alareuna ei leikkaannu
+        d3.select("#plot-rect")
+            .attr("x", -8)
+            .attr("y", -8)
+            .attr("width", innerWidth() + 16)
+            .attr("height", innerHeight() + 160); // lisää "bleediä" alas
+        zoomBehavior.translateExtent([[0, -40], [innerWidth(), innerH + 160]]); // v36: extra alas
+        // v36: overlay vain sisäalueelle, jätä akselille 2px rako
+        const axisGap = 2;
+        dimRect
+            .attr("x", rootTX + axisGap)
+            .attr("y", 0)
+            .attr("width", innerWidth() - axisGap)
+            .attr("height", state.height);
 
         setZOrder();  // v35: varmistetaan ettei track koskaan peitä tekstejä
         // alustava zoom-ikkuna = koko alue
@@ -95,9 +119,9 @@
         const maxData = d3.max(state.events, d => +d.time_years || 1);
 
         const padTopDec = 0.15;     // ~0.15 dekadia "ylätilaa" → minYears = minData / 10^0.15 (~/1.41)
-        const padBotDec = 0.15;     // kevyt alapään marginaali (valinnainen)
+        const padBotDec = 0.45;     // kevyt alapään marginaali (valinnainen)
 
-        state.minYears = Math.max(1e-8, minData / Math.pow(10, padTopDec));   // pienempi arvo = enemmän tilaa ylös
+        state.minYears = Math.max(1e-1, minData / Math.pow(10, padTopDec));   // pienempi arvo = enemmän tilaa ylös
         state.maxYears = Math.max(10, maxData * Math.pow(10, padBotDec));   // isompi arvo = hieman tilaa alas
     }
 
@@ -128,7 +152,7 @@
         const majors = d3.range(n0, n1 + 1).map(e => 10 ** e);
 
         // 1) Akseli: vain major-tickit, ei oletustekstiä
-        const axis = d3.axisLeft(y).tickValues(majors).tickSize(-6).tickFormat(() => "");
+        const axis = d3.axisLeft(y).tickValues(majors).tickSize(4).tickFormat(() => "");
         gAxis.call(axis);
 
         // 2) Major-tickien labeli “10^n”; minor-tickeillä ei tekstejä (koska niitä ei piirretä akselille)
@@ -150,7 +174,7 @@
                     const v = m * 10 ** e;
                     if (v >= d0 && v <= d1) {
                         gMinor.append("line")
-                            .attr("x1", 0).attr("x2", 6)     // lyhyt pisto akselin oikealle
+                            .attr("x1", -4).attr("x2", 0)     // lyhyt pisto akselin oikealle
                             .attr("y1", y(v)).attr("y2", y(v));
                         // HUOM: ei väriä/opacityä JS:ssä → kaikki tyyli CSS:ään
                     }
@@ -159,7 +183,7 @@
         }
     }
 
-    // piirtää teemakortit ja tapahtumat
+    // v36: kortin sisäpadit = otsikon ja event-fontin mitat (ei leikkautumista)
     function drawCards() {
         const themes = state.themes;
         const w = Math.max(cfg.card.minW, innerWidth() * 0.33);
@@ -170,8 +194,8 @@
             const minL = d3.min(logs), maxL = d3.max(logs);
             return {
                 theme: th,
-                yTop: state.y(Math.pow(10, maxL)),
-                yBot: state.y(Math.pow(10, minL)),
+                yTopEv: state.y(Math.pow(10, maxL)),   // ylimmän (vanhimman) eventin y
+                yBotEv: state.y(Math.pow(10, minL)),   // alimman (uusimman) eventin y
                 color: colorForTheme(th),
                 events: list
             };
@@ -181,27 +205,55 @@
         const sel = gCards.selectAll("g.card").data(data, d => d.theme);
         const ent = sel.enter().append("g").attr("class", "card");
 
-        ent.append("rect").attr("rx", 10).attr("ry", 10); // v36: varjo pois testiksi
-        ent.append("text").attr("class", "card-title").attr("x", 8).attr("dy", "0.9em").style("font-weight", "bold");
+        // kortin rect + otsikko + eventtiryhmä
+        ent.append("rect").attr("rx", 10).attr("ry", 10).attr("filter", "url(#shadow)");
+        ent.append("text").attr("class", "card-title").attr("x", 8).style("font-weight", "bold");
         ent.append("g").attr("class", "events");
         sel.exit().remove();
 
         sel.merge(ent).each(function (d, i) {
             const g = d3.select(this);
-            const x = (i % 2 === 0 ? 10 : 10 + indent); // kevyt sisennys
-            const y = Math.min(d.yTop, d.yBot);
-            const h = Math.abs(d.yBot - d.yTop);
+            const x = (i % 2 === 0 ? 10 : 10 + indent);
             g.attr("transform", `translate(${x},${0})`);
+
+            // --- mitataan tekstit → padit ---
+            const titleSel = g.select("text.card-title").text(d.theme);
+            // otsikon bbox → yläpadin korkeus
+            const titleH = Math.ceil((() => { try { return titleSel.node().getBBox().height; } catch { return 10; } })()) || 10;
+
+            // luodaan hetkeksi piilotettu event-label mittausta varten
+            const tmp = g.append("text").attr("class", "event-label").attr("visibility", "hidden").text("X");
+            const evH = Math.ceil((() => { try { return tmp.node().getBBox().height; } catch { return 9; } })()) || 9;
+            tmp.remove();
+
+            const topPad = titleH + 6;    // pieni marginaali otsikon ja eventtien väliin
+            const botPad = Math.ceil(evH * 2.2) + 8; // v36: enemmän tilaa alimman eventin alle (säädä kerrointa 1.8–2.5)
+            // --- kortin rect-alue: eventtialue + padit ---
+            const yRect = Math.min(d.yTopEv, d.yBotEv) - topPad;
+            const hRect = Math.abs(d.yBotEv - d.yTopEv) + topPad + botPad;
+
             g.select("rect")
-                .attr("x", 0).attr("y", y)
-                .attr("width", w).attr("height", h)
+                .attr("x", 0).attr("y", yRect)
+                .attr("width", w).attr("height", hRect)
                 .attr("fill", d.color).attr("fill-opacity", 0.55)
                 .attr("stroke", "#999").attr("stroke-opacity", 0.25);
 
-            // otsikko kortin sisälle yläreunaan
-            g.select("text.card-title").attr("y", y + 12).text(d.theme);
+            // v36: luokittele active/inactive klikatun teeman mukaan
+            const isActive = !state.activeTheme || state.activeTheme === d.theme;
+            g.classed("active", isActive).classed("inactive", !isActive);
 
-            // tapahtumat: viiva + teksti
+            // v36: otsikko “sticky” yläreunaan, mutta piiloon jos kortti kokonaan ulkona
+            const viewH = innerHeight();
+            const fullyAbove = (yRect + hRect) < 15;  // kortti lähes kokonaan yli yläreunan
+            const fullyBelow = yRect > viewH;         // kortti kokonaan yli alareunan
+
+            g.select("text.card-title")
+                .text(d.theme)
+                .style("display", (fullyAbove || fullyBelow) ? "none" : null)
+                .attr("y", Math.max(4, yRect + 2))  // clamp yläreunaan 4px marginaalilla
+                .attr("dy", "0.9em");
+
+            // --- eventit: pysyvät absoluuttisessa y:ssä (state.y) ---
             const evSel = g.select("g.events").selectAll("g.e").data(d.events, e => e.label + e.time_years);
             const evEnt = evSel.enter().append("g").attr("class", "e");
             evEnt.append("line").attr("class", "event-line");
@@ -217,6 +269,27 @@
                     .attr("x", 12).attr("y", yy)
                     .text(`${e.label} (${formatYear(e.year)})`);
             });
+            const merged = sel.merge(ent);
+
+            // klikkaus: aktivoi / tyhjennä
+            merged.on("click", (event, d) => {
+                state.activeTheme = (state.activeTheme === d.theme) ? null : d.theme;
+                drawCards();
+            });
+
+            // siirrä VANHA aktiivinen takaisin ja nosta VAIN tämänhetkinen aktiivinen overlayn yläpuolelle
+            while (gActive.node().firstChild) gCards.node().appendChild(gActive.node().firstChild);
+
+            if (state.activeTheme) {
+                merged.filter(d => d.theme === state.activeTheme).each(function () {
+                    gActive.node().appendChild(this);
+                });
+                dimRect.style("opacity", 0.45);     // globaali haalennus päälle
+                merged.classed("inactive", d => d.theme !== state.activeTheme);  // (valinnainen luokitus)
+            } else {
+                dimRect.style("opacity", 0);        // overlay pois
+                merged.classed("inactive", false);
+            }
         });
     }
 

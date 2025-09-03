@@ -1,4 +1,4 @@
-// timeline.js — v34 (clean, uses time_years + zoom bar on right)
+// timeline.js — v36b
 // Huom: tämä korvaa aiemman katkenneen tiedoston. Kaikki nimet pidetty yksinkertaisina
 // ja "svg" yms. määritellään vain kerran, jotta "already been declared" ei tule.
 // Akseli = log(time_years). Ala = nykyhetki (1 vuosi), ylös = kaukaisempi menneisyys.
@@ -16,9 +16,10 @@
         width: 0, height: 0,
         yBase: null, y: null,
         zoom: null,
-        minYears: 1, maxYears: 1e10,        // alustava; päivitetään datasta
+        minYears: .01, maxYears: 1e10,        // alustava; päivitetään datasta
         events: [],
         themes: [],
+        activeTheme: null, // v36: klikatun kortin teema
         themeColors: new Map()
     };
 
@@ -31,24 +32,38 @@
     const gAxis = gRoot.append("g").attr("class", "axis");
     const gCards = gRoot.append("g").attr("class", "cards");
     const gMinor = gRoot.append("g").attr("class", "minor-grid");
+    // v36: globaali haalennus ja aktiivikerros
+    const gDim = svg.append("g").attr("class", "dim");
+    const dimRect = gDim.append("rect")
+    .attr("class", "global-dim-rect")
+    .style("pointer-events", "none")  // ei blokkaa klikkejä
+    .style("fill", "#000");           // varmistetaan täyttö    
+    const gActive = svg.append("g").attr("class", "active-layer");        // tänne siirretään aktiivinen kortti
 
     // zoom bar oikealle
     const gZoomTrack = svg.insert("g", ".root").attr("class", "zoomBar"); // v35: tausta alle
     const gZoom = svg.append("g").attr("class", "zoomBar");         // ikkuna + hitbox päälle
     const zoomBG = gZoomTrack.append("rect").attr("class", "track");
-    const zoomWin = gZoom.append("rect").attr("class", "window").attr("rx", 3).attr("ry", 3);
+    // v36: ikkuna alimman tason track-ryhmään → ei peitä sisältöä
+    const zoomWin = gZoomTrack.append("rect").attr("class", "window").attr("rx", 3).attr("ry", 3);
 
     // leveä näkymätön tartunta-alue (drag)
     const HIT_PAD_LEFT = 14, HIT_PAD_RIGHT = 14, HIT_EXTRA_RIGHT_SCALE = 1.0, HIT_SCALE = 1.15;
     const zoomHit = gZoom.append("rect")
         .attr("class", "hit")
         .style("pointer-events", "all");
+    zoomHit.attr("opacity", 0); // varmistus: hitbox ei koskaan näy
+
+    // v36: varmista kerrosjärjestys heti luontivaiheessa
+    setZOrder();
 
     // --- apufunktiot ---
-    function setZOrder() {      // v35: eksplisiittinen kerrosjärjestys
-        gZoomTrack.lower();      // alin: taustaraita
-        gRoot.raise();           // kortit + akselit päälle
-        gZoom.raise();           // päällimmäiseksi: oranssi ikkuna + hitbox
+    function setZOrder() {
+        gZoomTrack.lower(); // alin: kapea zoombar-tausta
+        gRoot.raise();      // kaikki kortit & akseli (passiivinen sisältö)
+        gDim.raise();       // haalistuslayer passiivisen päälle
+        gActive.raise();    // aktiivinen kortti overlayn yläpuolelle
+        gZoom.raise();      // päällimmäisenä vain hitbox/drag
     }
 
     function layout() {
@@ -57,8 +72,9 @@
 
         // koko svg ja rootin paikka (akselille vasen marginaali)
         svg.attr("width", state.width).attr("height", state.height);
-        gRoot.attr("transform", `translate(${cfg.margin.left},${cfg.margin.top})`);
-
+        const rootTX = cfg.margin.left - 24;                 // sama siirto molemmille
+        gRoot.attr("transform", `translate(${rootTX},${cfg.margin.top})`);
+        gActive.attr("transform", `translate(${rootTX},${cfg.margin.top})`); // ← estää “hyppäyksen” vasemmalle
         // y-skaala: log(time_years): ala=nyky, ylös=menneisyys
         const innerH = innerHeight();
         state.yBase = d3.scaleLog().domain([state.minYears, state.maxYears]).range([0, innerH]); // menneisyys alas
@@ -72,15 +88,22 @@
 
         zoomBG.attr("x", 0).attr("y", 0).attr("width", cfg.zoomBar.width).attr("height", innerH);
         zoomWin.attr("x", 2).attr("width", cfg.zoomBar.width - 4).attr("y", 0).attr("height", innerH - 1);
+        // v36: klippireuna leveämmäksi (ylös ja alas) → korttien alareuna ei leikkaannu
+        d3.select("#plot-rect")
+            .attr("x", -8)
+            .attr("y", -8)
+            .attr("width", innerWidth() + 16)
+            .attr("height", innerHeight() + 160); // lisää "bleediä" alas
+        zoomBehavior.translateExtent([[0, -40], [innerWidth(), innerH + 160]]); // v36: extra alas
+        // v36: overlay vain sisäalueelle, jätä akselille 2px rako
+        const axisGap = 2;
+        dimRect
+            .attr("x", rootTX + axisGap)
+            .attr("y", 0)
+            .attr("width", innerWidth() - axisGap)
+            .attr("height", state.height);
 
         setZOrder();  // v35: varmistetaan ettei track koskaan peitä tekstejä
-
-        gZoom.raise();        // ikkuna/hitbox aina päällä
-        gZoomTrack.lower();   // tausta varmasti kaikkien alla
-
-        // z-järjestys: tausta alle, ikkuna+hitbox päälle
-        gZoomTrack.lower();
-        gZoom.raise();
         // alustava zoom-ikkuna = koko alue
         zoomWin.attr("x", 2).attr("width", cfg.zoomBar.width - 4).attr("y", 0).attr("height", innerH - 1); // synkassa taustan kanssa
     }
@@ -88,11 +111,18 @@
     function innerWidth() { return Math.max(0, state.width - cfg.margin.left - cfg.margin.right); }
     function innerHeight() { return Math.max(0, state.height - cfg.margin.top - cfg.margin.bottom); }
 
+    // v36: domain datasta + pieni marginaali ylä- ja alapäähän (log-dekadeina)
     function computeDomainFromData() {
         if (!state.events.length) return;
-        const maxY = d3.max(state.events, d => +d.time_years || 1);
-        state.minYears = 1;       // 1 vuosi alarajaksi (0 ei käy log-asteikolla)
-        state.maxYears = Math.max(10, maxY);
+
+        const minData = d3.min(state.events, d => Math.max(+d.time_years || 1e-8, 1e-8));
+        const maxData = d3.max(state.events, d => +d.time_years || 1);
+
+        const padTopDec = 0.15;     // ~0.15 dekadia "ylätilaa" → minYears = minData / 10^0.15 (~/1.41)
+        const padBotDec = 0.45;     // kevyt alapään marginaali (valinnainen)
+
+        state.minYears = Math.max(1e-1, minData / Math.pow(10, padTopDec));   // pienempi arvo = enemmän tilaa ylös
+        state.maxYears = Math.max(10, maxData * Math.pow(10, padBotDec));   // isompi arvo = hieman tilaa alas
     }
 
     function colorForTheme(t) {
@@ -111,54 +141,49 @@
         return d3.range(n0, n1 + 1).map(e => Math.pow(10, e));
     }
 
+    // timeline.js v36 — v32-logiikka: major-tickit akselissa, minor-viivat .minor-grid:iin
     function drawAxis() {
         const y = state.y;
         const [d0, d1] = y.domain();
 
-        // HUOM: floor/ceil → toimii myös kun näkyy vain osa dekadista
-        const n0 = Math.floor(Math.log10(d0));
-        const n1 = Math.ceil(Math.log10(d1));
-
-        // majorit 10^n ja minorit 2..9×10^n → VIIVAT AINA
+        // major: 10^n
+        const n0 = Math.ceil(Math.log10(d0));
+        const n1 = Math.floor(Math.log10(d1));
         const majors = d3.range(n0, n1 + 1).map(e => 10 ** e);
-        const minors = [];
-        for (let e = n0; e <= n1; e++) {
-            for (let m = 2; m <= 9; m++) {
-                const v = m * 10 ** e;
-                if (v >= d0 && v <= d1) minors.push(v);
-            }
-        }
-        const ticks = majors.concat(minors).sort((a, b) => a - b);
 
-        // viivat ilman oletustekstejä
-        const axis = d3.axisLeft(y).tickValues(ticks).tickSize(-6).tickFormat(() => "");
+        // 1) Akseli: vain major-tickit, ei oletustekstiä
+        const axis = d3.axisLeft(y).tickValues(majors).tickSize(4).tickFormat(() => "");
         gAxis.call(axis);
 
-        // Näytä numerot vain kun väljyys riittää
-        const pxPerDecade = Math.abs(y(10 ** n0) - y(10 ** (n0 + 1))) || 0;
-        const pxPerMinor = pxPerDecade / 8;
-        const showMajor = pxPerDecade >= 26;
-        const showMinor = pxPerMinor >= 14;
-
-        // tyhjennä mahdolliset vanhat
-        gAxis.selectAll("g.tick > text").text("");
-
+        // 2) Major-tickien labeli “10^n”; minor-tickeillä ei tekstejä (koska niitä ei piirretä akselille)
+        gAxis.selectAll("g.tick > text").text(""); // varmuus tyhjennys
         gAxis.selectAll("g.tick").each(function (d) {
-            const isMajor = Number.isInteger(Math.log10(d));
-            if ((isMajor && showMajor) || (!isMajor && showMinor)) {
-                const exp = Math.floor(Math.log10(d));
-                const base = 10 ** exp;
-                const mant = Math.round(d / base); // majorilla 1
-
-                const t = d3.select(this).select("text").text(null);
-                // formaatti: "1 10^n" tai "n 10^m"
-                t.append("tspan").text(String(mant) + " ");
-                t.append("tspan").text("10");
-                t.append("tspan").attr("baseline-shift", "super").attr("font-size", "9px").text(exp);
-            }
+            const exp = Math.floor(Math.log10(d));
+            const t = d3.select(this).select("text").text(null);
+            t.append("tspan").text("10");
+            t.append("tspan").attr("baseline-shift", "super").attr("font-size", "9px").text(exp);
         });
+
+        // 3) Minor-viivat .minor-grid-ryhmään (2..9 × 10^n) — vain jos ei liian tiheää
+        gMinor.selectAll("*").remove();
+        const visibleDecades = n1 - n0 + 1;                 // kuinka monta dekadia näkyy
+        const showMinor = visibleDecades <= 12;              // kynnys kuten v32: “riittävän väljä”
+        if (showMinor) {
+            for (let e = n0; e <= n1; e++) {
+                for (let m = 2; m <= 9; m++) {
+                    const v = m * 10 ** e;
+                    if (v >= d0 && v <= d1) {
+                        gMinor.append("line")
+                            .attr("x1", -4).attr("x2", 0)     // lyhyt pisto akselin oikealle
+                            .attr("y1", y(v)).attr("y2", y(v));
+                        // HUOM: ei väriä/opacityä JS:ssä → kaikki tyyli CSS:ään
+                    }
+                }
+            }
+        }
     }
-    // piirtää teemakortit ja tapahtumat
+
+    // v36: kortin sisäpadit = otsikon ja event-fontin mitat (ei leikkautumista)
     function drawCards() {
         const themes = state.themes;
         const w = Math.max(cfg.card.minW, innerWidth() * 0.33);
@@ -169,8 +194,8 @@
             const minL = d3.min(logs), maxL = d3.max(logs);
             return {
                 theme: th,
-                yTop: state.y(Math.pow(10, maxL)),
-                yBot: state.y(Math.pow(10, minL)),
+                yTopEv: state.y(Math.pow(10, maxL)),   // ylimmän (vanhimman) eventin y
+                yBotEv: state.y(Math.pow(10, minL)),   // alimman (uusimman) eventin y
                 color: colorForTheme(th),
                 events: list
             };
@@ -180,27 +205,55 @@
         const sel = gCards.selectAll("g.card").data(data, d => d.theme);
         const ent = sel.enter().append("g").attr("class", "card");
 
+        // kortin rect + otsikko + eventtiryhmä
         ent.append("rect").attr("rx", 10).attr("ry", 10).attr("filter", "url(#shadow)");
-        ent.append("text").attr("class", "card-title").attr("x", 8).attr("dy", "0.9em").style("font-weight", "bold");
+        ent.append("text").attr("class", "card-title").attr("x", 8).style("font-weight", "bold");
         ent.append("g").attr("class", "events");
         sel.exit().remove();
 
         sel.merge(ent).each(function (d, i) {
             const g = d3.select(this);
-            const x = (i % 2 === 0 ? 10 : 10 + indent); // kevyt sisennys
-            const y = Math.min(d.yTop, d.yBot);
-            const h = Math.abs(d.yBot - d.yTop);
+            const x = (i % 2 === 0 ? 10 : 10 + indent);
             g.attr("transform", `translate(${x},${0})`);
+
+            // --- mitataan tekstit → padit ---
+            const titleSel = g.select("text.card-title").text(d.theme);
+            // otsikon bbox → yläpadin korkeus
+            const titleH = Math.ceil((() => { try { return titleSel.node().getBBox().height; } catch { return 10; } })()) || 10;
+
+            // luodaan hetkeksi piilotettu event-label mittausta varten
+            const tmp = g.append("text").attr("class", "event-label").attr("visibility", "hidden").text("X");
+            const evH = Math.ceil((() => { try { return tmp.node().getBBox().height; } catch { return 9; } })()) || 9;
+            tmp.remove();
+
+            const topPad = titleH + 6;    // pieni marginaali otsikon ja eventtien väliin
+            const botPad = Math.ceil(evH * 2.2) + 8; // v36: enemmän tilaa alimman eventin alle (säädä kerrointa 1.8–2.5)
+            // --- kortin rect-alue: eventtialue + padit ---
+            const yRect = Math.min(d.yTopEv, d.yBotEv) - topPad;
+            const hRect = Math.abs(d.yBotEv - d.yTopEv) + topPad + botPad;
+
             g.select("rect")
-                .attr("x", 0).attr("y", y)
-                .attr("width", w).attr("height", h)
+                .attr("x", 0).attr("y", yRect)
+                .attr("width", w).attr("height", hRect)
                 .attr("fill", d.color).attr("fill-opacity", 0.55)
                 .attr("stroke", "#999").attr("stroke-opacity", 0.25);
 
-            // otsikko kortin sisälle yläreunaan
-            g.select("text.card-title").attr("y", y + 12).text(d.theme);
+            // v36: luokittele active/inactive klikatun teeman mukaan
+            const isActive = !state.activeTheme || state.activeTheme === d.theme;
+            g.classed("active", isActive).classed("inactive", !isActive);
 
-            // tapahtumat: viiva + teksti
+            // v36: otsikko “sticky” yläreunaan, mutta piiloon jos kortti kokonaan ulkona
+            const viewH = innerHeight();
+            const fullyAbove = (yRect + hRect) < 15;  // kortti lähes kokonaan yli yläreunan
+            const fullyBelow = yRect > viewH;         // kortti kokonaan yli alareunan
+
+            g.select("text.card-title")
+                .text(d.theme)
+                .style("display", (fullyAbove || fullyBelow) ? "none" : null)
+                .attr("y", Math.max(4, yRect + 2))  // clamp yläreunaan 4px marginaalilla
+                .attr("dy", "0.9em");
+
+            // --- eventit: pysyvät absoluuttisessa y:ssä (state.y) ---
             const evSel = g.select("g.events").selectAll("g.e").data(d.events, e => e.label + e.time_years);
             const evEnt = evSel.enter().append("g").attr("class", "e");
             evEnt.append("line").attr("class", "event-line");
@@ -216,6 +269,27 @@
                     .attr("x", 12).attr("y", yy)
                     .text(`${e.label} (${formatYear(e.year)})`);
             });
+            const merged = sel.merge(ent);
+
+            // klikkaus: aktivoi / tyhjennä
+            merged.on("click", (event, d) => {
+                state.activeTheme = (state.activeTheme === d.theme) ? null : d.theme;
+                drawCards();
+            });
+
+            // siirrä VANHA aktiivinen takaisin ja nosta VAIN tämänhetkinen aktiivinen overlayn yläpuolelle
+            while (gActive.node().firstChild) gCards.node().appendChild(gActive.node().firstChild);
+
+            if (state.activeTheme) {
+                merged.filter(d => d.theme === state.activeTheme).each(function () {
+                    gActive.node().appendChild(this);
+                });
+                dimRect.style("opacity", 0.45);     // globaali haalennus päälle
+                merged.classed("inactive", d => d.theme !== state.activeTheme);  // (valinnainen luokitus)
+            } else {
+                dimRect.style("opacity", 0);        // overlay pois
+                merged.classed("inactive", false);
+            }
         });
     }
 
@@ -349,12 +423,14 @@
             .attr("flood-color", "#000").attr("flood-opacity", 0.25);
         // v33: piirtoalueen leikkaus, estää valumisen akselin yli
         const clip = defs.append("clipPath").attr("id", "plot-clip");
-        clip.append("rect").attr("id", "plot-rect").attr("x", 0).attr("y", 0).attr("width", 1).attr("height", 1);
-        // PÄIVITÄ leikkausalueen koko nyt kun elementti on olemassa
-        d3.select("#plot-rect")
-            .attr("width", innerWidth())
-            .attr("height", innerHeight());
-
+        clip.append("rect")
+            .attr("id", "plot-rect")
+            .attr("x", 0).attr("y", 0)
+            .attr("width", innerWidth())       // heti oikeat mitat
+            .attr("height", innerHeight())
+            .attr("fill", "none")              // EI koskaan maalaa
+            .attr("stroke", "none")
+            .attr("pointer-events", "none");
         gCards.attr("clip-path", "url(#plot-clip)");
 
         // zoom extents
@@ -374,13 +450,14 @@
             })
         );
 
-
         // lataa & piirrä
         await loadData();
         // päivitä skaalat domainin mukaan
         state.yBase.domain([state.minYears, state.maxYears]);
         state.y.domain([state.minYears, state.maxYears]);
         applyZoom();
+        setZOrder();                 // heti ensimmäisen piirron jälkeen
+        requestAnimationFrame(setZOrder); // varmuus: myös seuraavassa framessa
 
         // pieni vihje: automaattinen fokusoituminen "ihmiskunta"-korttiin jos on
         const hasHuman = state.themes.includes("ihmiskunta");
@@ -413,7 +490,6 @@
             setZOrder(); // v35: varmistetaan kerrosjärjestys
         });
         ro.observe(container);
-
     }
 
     // start
