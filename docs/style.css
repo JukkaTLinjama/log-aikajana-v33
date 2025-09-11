@@ -18,29 +18,36 @@ html,
 body {
     margin: 0;
     padding: 0;
-    height: 100dvh;
-    overscroll-behavior: none;   /* v37: estää bounce/yliskrolli-efektin */
+    height: 100%;
+    /* v38: EI 100dvh → iOS Chromen bugit pois */
+    overscroll-behavior: none;
     font-family: sans-serif;
-    background: #6b6a6a; /* tumma harmaa */
-    color: #ddd;    /* oletusteksti vähän vaaleampi */
+    background: #6b6a6a;
+    color: #ddd;
     overflow: hidden;
-    padding-bottom: var(--footer-h);   /* v33: varaa tila kiinteälle footerille */
+    /* ei pystyscrollia */
     -webkit-overflow-scrolling: touch;
 }
 
 #page-title {
-    margin: 0.5em 1em;
-    font-size: 1.3em;
-    font-weight: 300; /* ohuempi */
-    font-stretch: 85%;/* kapeampi, toimii useissa selaimissa */
-    letter-spacing: 0.2px; /* pieni ilmavuus parantaa luettavuutta */
+    margin: 0.4em 1em 0em 1em; /* top right bottom left */
+    padding-right: 30px;
+    /* varaa tila ?-ikonille (24px koko + ~12–20px väli) */
+    padding-bottom: 0.8em;
+        /* "rivi tyhjää" mittautuu oikein */
+    font-size: 1.12em;
+    font-weight: 300;
+    font-stretch: 85%;
+    letter-spacing: 0.2px;
 }
+
 /* v38: jos muuttuvat fontit käytössä (esim. Inter), kavennetaan vielä */
 @supports (font-variation-settings: normal) {
     #page-title {
         font-variation-settings: "wght" 320, "wdth" 85;
     }
 }
+
 #info-toggle {
     position: absolute;
     top: 10px;
@@ -48,12 +55,9 @@ body {
     z-index: 2000;
     /* yli kaiken, myös svg */
     cursor: pointer;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
-    color: #fff;
-    /* selkeä kontrasti */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
-    /* rajaa vaalealla taustalla */
+    color: #e49a45bc;
     width: 30px;
     height: 30px;
     /* hitbox hieman suurempi */
@@ -80,18 +84,21 @@ body {
     display: none;
     max-width: 240px;
     padding: 8px 12px;
-    background: rgba(40, 40, 40, 0.95);
+    background: rgba(40, 40, 40, 0.85);
     border: 1px solid #555;
     border-radius: 8px;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.4;
-    #info-box em {
-            font-style: italic;
-            font-weight: 400;
-        }
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     z-index: 1000;
 }
+
+#info-box em {
+    /* v38: korjattu virheellinen sisäkkäisyys */
+    font-style: italic;
+    font-weight: 400;
+}
+
 /* v38: info-box linkkien värit tummalla taustalla, hyvä kontrasti */
 #info-box a {
     color: #89723b;
@@ -117,47 +124,17 @@ body {
 }
 
 #timeline-container {
-    height: calc(100vh - var(--header-h) - var(--footer-h));    /* v38: perusfallback */
-    margin: 0 8px;
+    position: fixed;
+    /* v38.fix: täyttää ruudun ilman vh/dvh-ongelmaa */
+    inset: calc(env(safe-area-inset-top) + var(--header-h)) 8px calc(env(safe-area-inset-bottom) + var(--footer-h)) 8px;
+    /* top right bottom left */
+    height: auto;
+    /* ei korkeuden laskentaa → selainpalkit eivät sotke */
+    margin: 0;
     background: #474646;
     border: 1px solid #211f1f;
     border-radius: 6px;
     overflow: hidden;
-}
-/* v38: uudet iOS/Chromium-fallbackit korkeusbugiin */
-
-/* 2a) modernit “*vh” – käytä stable viewportia jos tuettu */
-@supports (height: 100svh) {
-    #timeline-container {
-        height: calc(100svh - var(--header-h) - var(--footer-h));
-        /* vakaampi kuin 100vh iOS:ssä */
-    }
-}
-
-/* 2b) iOS WebKit -pakotus: käytä -webkit-fill-available koko korkeuteen */
-@supports (-webkit-touch-callout: none) {
-
-    html,
-    body {
-        height: -webkit-fill-available;
-    }
-
-    /* varmistaa että juurielementit täyttyvät */
-    #timeline-container {
-        height: calc(-webkit-fill-available - var(--header-h) - var(--footer-h));
-    }
-}
-
-/* 2c) v38: JS päivittää --vhpx → käytä sitä jos saatavilla */
-:root {
-    --vhpx: 100vh;
-}
-
-/* oletus, JS yliajaa pikseleinä */
-@supports (-webkit-touch-callout: none) {
-    #timeline-container {
-        height: calc(var(--vhpx) - var(--header-h) - var(--footer-h));
-    }
 }
 
 #timeline {
@@ -221,23 +198,27 @@ body {
 .zoomBar .window {
     fill: var(--accent);
     opacity: 0.25;
-    /* aiempi 0.65 → häiritsemätön */
     stroke: var(--accent);
     pointer-events: none;
     /* varmistetaan ettei nappaa klikkejä */
 }
 
-.zoomBar .hit {
-    fill: transparent;
-    /* näkymätön */
-    /* näkyy vain osumana; leveys säädetään JS:ssä */
-}
-
-.card-group rect.card {
-    fill: var(--card);
+g.card rect {
+    /* ÄLÄ aseta filliä täällä → JS:n d.color näkyy */
     stroke: #2a2c30;
     rx: 8;
     ry: 8;
+    vector-effect: non-scaling-stroke;
+
+    /* pehmeä korostusvalmius */
+    transition: fill-opacity .35s ease, stroke-opacity .35s ease, filter .35s ease;
+}
+
+g.card.active rect {
+    fill-opacity: 0.85;
+    /* korostus */
+    stroke-opacity: 0.55;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .25));
 }
 
 .card-group text {
@@ -276,13 +257,7 @@ body {
     .axis text,
     .card-group text {
         font-size: 11px;
-    }
-}
-/* kompaktin footerin tuki: sisältö käyttää kaiken muun tilan */
-html,
-body {
-    height: 100dvh; /* v37: sama dynaaminen korkeus myös tässä lohkossa */
-}
+    }}
 
 body {
     display: flex;
@@ -290,17 +265,6 @@ body {
     min-height: 100dvh;
 }
 
-main,
-#content,
-#timeline-container {
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-/* svg-alue ei työnnä footeria */
-footer {
-    flex: 0 0 auto;
-}
 #plot-rect {
     fill: none !important;
     stroke: none !important;
@@ -330,4 +294,24 @@ footer {
 .card-group.inactive .card {
     fill-opacity: 1;
     /* vältetään fill-opacity * filter -kertaantuminen */
+}
+
+/* v38: estä iOS/Android copy/select/callout aikajanan alueella */
+#timeline-container,
+#timeline,
+#timeline * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    /* iOS long-press menu pois */
+    -webkit-tap-highlight-color: transparent;
+    /* poista sininen highlight */
+}
+
+/* jätä infolaatikon tekstit valittaviksi */
+#info-box,
+#info-box * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
 }

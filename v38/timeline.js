@@ -32,13 +32,15 @@
             window.visualViewport.addEventListener('scroll', apply, { passive: true });
         }
     })();
-    
+
     const cfg = {
         margin: { top: 12, right: 54, bottom: 12, left: 54 },
         zoomBar: { width: 22, gap: 10 },     // oikean reunan zoom-palkki
         card: { minW: 160, pad: 10 },
         palette: ["#b6c8d4", "#70a8c6", "#4b9fa8", "#4dbc82", "#7be2a3"] // korttien värit
     };
+    const ACTIVATE_DELAY = 1000; // ms ennen kuin kortti saa .active
+    const ZOOM_DELAY = 1500;     // ms ennen zoom-animaatiota (säilytettiin pyyntösi mukaisena)
 
     // --- tila ---
     const state = {
@@ -51,6 +53,8 @@
         activeTheme: null, // v36: klikatun kortin teema
         themeColors: new Map()
     };
+
+    let autoZooming = false; // v38: estä RO ylikirjoittamasta autofocus-animaatiota
 
     // --- perusvalinnat ---
     const svg = d3.select("#timeline");
@@ -130,7 +134,8 @@
             .attr("x", 0)
             .attr("y", 0)
             .attr("width", innerWidth())
-            .attr("height", innerHeight());        zoomBehavior.translateExtent([[0, -40], [innerWidth(), innerH + 160]]); // v36: extra alas
+            .attr("height", innerHeight()); 
+            zoomBehavior.translateExtent([[0, -2000], [innerWidth(), innerH + 2000]]); // v38: reilu pystybufferi
         // v36: overlay vain sisäalueelle, jätä akselille 2px rako
         const axisGap = 2;
         dimRect
@@ -432,9 +437,14 @@
 
     // --- init ---
     async function init() {
-        // v33: mittaa H1-korkeus → CSS-var
+        // v38: mittaa H1 + margin-bottom → CSS --header-h
         const h1 = document.getElementById('page-title');
-        const h1H = h1 ? (Math.ceil(h1.getBoundingClientRect().height) + 8) : 0;
+        let h1H = 0;
+        if (h1) {
+            const r = h1.getBoundingClientRect();                   // sisältää paddingin
+            const mb = parseFloat(getComputedStyle(h1).marginBottom) || 0; // lisää margari
+            h1H = Math.ceil(r.height + mb);
+        }
         document.documentElement.style.setProperty('--header-h', `${h1H}px`);
 
         layout();
@@ -476,7 +486,7 @@
 
         // zoom extents
         svg.call(zoomBehavior);
-        zoomBehavior.translateExtent([[0, 0], [innerWidth(), innerHeight() - 1]]);
+        zoomBehavior.translateExtent([[0, -2000], [innerWidth(), innerHeight() + 2000]]); // v38: reilu pystybufferi
         attachZoomDragging();
         zoomHit.call(
             d3.drag().on("drag", (event) => {
@@ -500,35 +510,76 @@
         setZOrder();                 // heti ensimmäisen piirron jälkeen
         requestAnimationFrame(setZOrder); // varmuus: myös seuraavassa framessa
 
-        // pieni vihje: automaattinen fokusoituminen "ihmiskunta"-korttiin jos on
-        const hasHuman = state.themes.includes("ihmiskunta");
-        if (hasHuman) {
-            const list = state.events.filter(e => e.theme === "ihmiskunta");
-            const ys = list.map(e => state.y(e.time_years));
-            const mid = (d3.min(ys) + d3.max(ys)) / 2;
+        // estä contextmenu + selectstart timeline-containerissa
+        const tl = document.getElementById("timeline-container");
+        ["contextmenu", "selectstart"].forEach(ev =>
+            tl.addEventListener(ev, e => e.preventDefault(), { passive: false })
+        );
+        // poista valinnat pointerdownissa
+        d3.select("#timeline").on("pointerdown", () => {
+            if (window.getSelection) { try { window.getSelection().removeAllRanges(); } catch (e) { } }
+        });
+
+        // v38: autofocus "ihmiskunta" – aktivointi viiveellä, zoom myöhemmin
+        const human = state.events.filter(e => e.theme === "ihmiskunta");
+        if (human.length) {
+            // laske zoom-kohde
+            const ys = human.map(e => state.y(e.time_years));
+            const midLocal = (d3.min(ys) + d3.max(ys)) / 2;   // gRoot-koord.
+            const midScreen = cfg.margin.top + midLocal;      // ruutukoord.
             const k = 3;
-            const H = innerHeight();
-            const newY = -mid * k + H / 2;
-            svg.transition().duration(900).call(zoomBehavior.transform, d3.zoomIdentity.translate(0, newY).scale(k));
+            const Hscreen = state.height;
+            const innerH = innerHeight();
+
+            let newY = -midScreen * k + Hscreen / 2;
+            const minT = Math.min(0, Hscreen - innerH * k);
+            const maxT = 0;
+            newY = Math.max(minT, Math.min(maxT, newY));
+
+            // 1) aktivoi kortti viiveellä
+            d3.timeout(() => {
+                const sel = gCards.selectAll("g.card").filter(d => d.theme === "ihmiskunta");
+                sel.classed("active", true).raise();
+            }, ACTIVATE_DELAY);
+
+            // 2) zoomaa myöhemmin
+            d3.timeout(() => {
+                autoZooming = true;
+                svg.transition()
+                    .duration(900)
+                    .ease(d3.easeCubicOut)
+                    .call(zoomBehavior.transform, d3.zoomIdentity.translate(0, newY).scale(k))
+                    .on("end", () => { autoZooming = false; });
+            }, ZOOM_DELAY);
         }
 
         const ro = new ResizeObserver(() => {
-            // 1) mittaa otsikon korkeus → CSS-var
+            // 1) v38: mittaa H1 + margin-bottom → --header-h
             const h1 = document.getElementById('page-title');
-            const h1H = h1 ? (Math.ceil(h1.getBoundingClientRect().height) + 8) : 0;
+            let h1H = 0;
+            if (h1) {
+                const r = h1.getBoundingClientRect();                       // sisältää paddingin
+                const mb = parseFloat(getComputedStyle(h1).marginBottom) || 0;
+                h1H = Math.ceil(r.height + mb);
+            }
             document.documentElement.style.setProperty('--header-h', `${h1H}px`);
 
-            // 2) säilytä nykyinen zoom, päivitä layout ja extentit
-            const t = d3.zoomTransform(svg.node());
+            // 2) säilytä nykyinen zoom, päivitä layout ja extentit (laaja extent)
+            const tBefore = d3.zoomTransform(svg.node());
             layout();
             svg.call(zoomBehavior);
-            zoomBehavior.translateExtent([[0, 0], [innerWidth(), innerHeight() - 1]]);
-            updateZoomIndicator(t);
+            zoomBehavior.translateExtent([[0, -2000], [state.width, state.height + 2000]]);
+
+            // käytä ajantasaista transformia indikaattoriin & piirtoon
+            const tNow = d3.zoomTransform(svg.node());
+            updateZoomIndicator(tNow);
             applyZoom();
 
-            // 3) palauta sama zoom-tila
-            svg.call(zoomBehavior.transform, t);
-            setZOrder(); // v35: varmistetaan kerrosjärjestys
+            // 3) palauta sama zoom-tila VAIN jos ei käynnissä autofocus-animaatio
+            if (!autoZooming) {
+                svg.call(zoomBehavior.transform, tBefore);
+            }
+            setZOrder();
         });
         ro.observe(container);
     }
