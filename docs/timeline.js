@@ -1,9 +1,38 @@
-// timeline.js — v37
+// timeline.js — v38
 // Huom: tämä korvaa aiemman katkenneen tiedoston v32. Kaikki nimet pidetty yksinkertaisina
 // ja "svg" yms. määritellään vain kerran, jotta "already been declared" ei tule.
 // Akseli = log(time_years). Ala = nykyhetki (1 vuosi), ylös = kaukaisempi menneisyys.
 
 (() => {
+    // v38 viewport fix for iOS Chrome/Safari
+    (function v38ViewportFix() {
+        const root = document.documentElement;
+
+        function apply() {
+            // 1) lue “oikea” näkyvä korkeus (visualViewport), fallback window.innerHeightiin
+            const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 0;
+            root.style.setProperty('--vhpx', `${Math.round(vh)}px`); // kommentti: pikseleinä → CSS: calc(var(--vhpx) ...)
+
+            // 2) mittaa otsikon ja footerin todellinen korkeus → aseta CSS-muuttujiksi (CSS jo käyttää niitä)
+            const hdr = document.getElementById('page-title');
+            const ftr = document.getElementById('page-footer');
+            const hH = hdr ? Math.round(hdr.getBoundingClientRect().height) : 0;
+            const fH = ftr ? Math.round(ftr.getBoundingClientRect().height) : 0;
+            root.style.setProperty('--header-h', `${hH}px`);
+            root.style.setProperty('--footer-h', `${fH}px`);
+        }
+
+        // ensilaskenta
+        apply();
+
+        // reagoi selainpalkin muutoksiin iOS:ssä
+        window.addEventListener('resize', apply, { passive: true });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', apply, { passive: true });
+            window.visualViewport.addEventListener('scroll', apply, { passive: true });
+        }
+    })();
+    
     const cfg = {
         margin: { top: 12, right: 54, bottom: 12, left: 54 },
         zoomBar: { width: 22, gap: 10 },     // oikean reunan zoom-palkki
