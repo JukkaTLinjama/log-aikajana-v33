@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+    <h1 id="page-title">
+        History at your fingertips — Big Bang to 2025
+        <span style="font-size:0.65em; color:#9e9d9d;">v38</span>
+    </h1>
+
+
+    <div id="info-toggle">?</div>
+<div id="info-box" style="display:none;">
+    <div id="help-message">
+        <p><em>Experimental visualization</em> of history across an immense time span.</p>
+        <p>A vertical, <em>zoomable logarithmic timeline</em> of key events from the Big Bang to the present
+            (2025).</p>
+        <p>Events are grouped into <em>partly overlapping themes</em> that you can bring to the front.</p>
+
+        <hr style="border:none; border-top:1px solid #ddd; margin:8px 0;">
+        <!-- pikavinkit -->
+        <p><em>Tips:</em> Pinch/scroll Zoom bar or content to zoom · Click a theme card to focus · Tap an event
+            for notes</p>
+    </div>
+
+    <!-- status päivittyy skriptistä -->
+    <div id="status-message" style="font-size:0.75em; color:#666; margin-top:2px;">
+        Loading…
+    </div>
+
+    <!-- erillinen author-kenttä, EI muutu skriptissä -->
+    <div id="author" style="font-size:0.75em; color:#666; margin-top:6px;">
+        Authors: Jukka Linjama &amp; ChatGPT 5.0. 
+    </div>
+
+    <div id="license-info" style="font-size:0.7em; color:#666; margin-top:6px;">
+        Project in <a href="https://github.com/JukkaTLinjama/log-aikajana" target="_blank">Github</a>
+        Shared as an <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>
+        experiment.<br>
+        Enjoy &amp; share!
+    </div>
+</div>
+
+    <div id="timeline-container">
+        <svg id="timeline"></svg>
+    </div>
+
+    <div id="page-footer">© 2025 JL · CC BY 4.0</div>
+
+    <script src="timeline.js"></script>
+</body>
+
+</html>

@@ -31,22 +31,46 @@ body {
 #page-title {
     margin: 0.5em 1em;
     font-size: 1.3em;
-    font-weight: 600;
+    font-weight: 300; /* ohuempi */
+    font-stretch: 85%;/* kapeampi, toimii useissa selaimissa */
+    letter-spacing: 0.2px; /* pieni ilmavuus parantaa luettavuutta */
 }
-
+/* v38: jos muuttuvat fontit käytössä (esim. Inter), kavennetaan vielä */
+@supports (font-variation-settings: normal) {
+    #page-title {
+        font-variation-settings: "wght" 320, "wdth" 85;
+    }
+}
 #info-toggle {
     position: absolute;
     top: 10px;
     right: 10px;
+    z-index: 2000;
+    /* yli kaiken, myös svg */
     cursor: pointer;
     font-size: 18px;
-    background: rgba(255, 255, 255, 0.1);
-    width: 28px;
-    height: 28px;
+    font-weight: 700;
+    color: #fff;
+    /* selkeä kontrasti */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+    /* rajaa vaalealla taustalla */
+    width: 30px;
+    height: 30px;
+    /* hitbox hieman suurempi */
+    line-height: 30px;
     text-align: center;
-    line-height: 26px;
-    border-radius: 6px;
+    border-radius: 8px;
+
+    /* läpikuultava oranssi badge */
+    background: rgba(255, 138, 66, 0.167);
+    /* “accent” ~ #ff8c42, 28% */
+    border: 1px solid rgba(255, 138, 66, 0.119);
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.139),
+        0 0 0 2px rgba(255, 140, 66, 0.12) inset;
+    /* ohut hehku */
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #info-box {
@@ -67,6 +91,29 @@ body {
         }
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+}
+/* v38: info-box linkkien värit tummalla taustalla, hyvä kontrasti */
+#info-box a {
+    color: #89723b;
+    /* lämmin keltainen/oranssi */
+    text-decoration-thickness: 1.5px;
+}
+
+#info-box a:hover {
+    color: #FFB703;
+    /* kirkkaampi hover */
+}
+
+#info-box a:visited {
+    color: #c6b291;
+    /* hivenen tummempi visited */
+}
+
+#info-box a:focus-visible {
+    outline: 2px solid #FFB703;
+    /* näppis-/kosk. fokus näkyy */
+    outline-offset: 2px;
+    border-radius: 3px;
 }
 
 #timeline-container {
