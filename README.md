@@ -38,7 +38,8 @@ Nykyinen versio (v33+) koostuu useista tiedostoista:
 - **v23–v32**  
   - D3.js otettiin mukaan.  
   - Ensimmäiset kortit ja zoomaus.  
-  - Kokeiluja eri asettelulla ja tyyleillä.
+  - Kokeiluja eri asettelulla ja tyyleillä.  
+  - **Demo**: [v32 GitHub Pages](https://jukkatlinjama.github.io/log-aikajana/)
 
 - **v33**  
   - Iso rakenteellinen muutos: projekti jaettiin tiedostoihin (`index.html`, `style.css`, `timeline.js`, `eventsDB.json`).  
@@ -55,4 +56,10 @@ Nykyinen versio (v33+) koostuu useista tiedostoista:
 
 © 2025 Jukka Linjama  
 Julkaistu [Creative Commons BY 4.0](https://creativecommons.org/licenses/by/4.0/) -lisenssillä.  
-Saat vapaasti käyttää, muokata ja jakaa, kunhan mainitset alkuperäisen tekijän.
+Saat vapaasti käyttää, muokata ja jakaa, kunhan mainitset alkuperäisen tekijän.  
+
+---
+
+- **Uusin demo**: [v38 GitHub Pages](https://jukkatlinjama.github.io/log-aikajana-v33/)
+
+📄 Katso myös [CHANGELOG.md](./CHANGELOG.md) tarkempiin versiotietoihin.  
