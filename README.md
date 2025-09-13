@@ -10,6 +10,9 @@ Aikajana ulottuu **Alkuräjähdyksestä (13,8 mrd vuotta sitten) nykypäivään 
 Visualisointi on pystysuuntainen, ja aikaskaala on **log₁₀(Δt)** – jokainen dekadi (10ⁿ) vie yhtä paljon tilaa näytöllä.  
 Tapahtumat on ryhmitelty osittain päällekkäisiin teemoihin (esim. kosmos, biologia, ihmiskunta, historia, teknologia).  
 
+Projektin tavoitteena on myös mahdollistaa, että **kuka tahansa voi kokeilla omia teemojaan ja tapahtumiaan** ja nähdä ne visualisoituna aikajanalla.  
+Tätä varten kehitetään erillistä **editoria**, jolla voi muokata ja tallentaa `eventsDB.json`-tiedostoa.
+
 ## Ominaisuuksia
 
 - **Zoomattava ja vieritettävä aikajana** (hiiren rulla, pinch/drag mobiilissa).
@@ -51,6 +54,56 @@ Nykyinen versio (v33+) koostuu useista tiedostoista:
   - Typografian ja värien hienosäätö.  
   - Mobiilioptimointeja (fonttikoot, hitboxit).  
   - Automaattinen fokusointi **ihmiskunta**-korttiin zoom-animaatiolla.
+
+## EventsDB ja editori
+
+Projektin data on eriytetty tiedostoon **`eventsDB.json`**, joka sisältää kaikki aikajanan tapahtumat.  
+
+### Rakenne
+
+```json
+{
+  "metadata": { "version": "1.x", "author": "JL", "updated": "YYYYMMDD" },
+  "events": [
+    {
+      "theme": "teema",
+      "events": [
+        {
+          "label": "Tapahtuman nimi",
+          "year": "teksti",
+          "time_years": 123456,
+          "log": 12.34,
+          "author": "",
+          "ref": "",
+          "comments": "lisätietoa"
+        }
+      ]
+    }
+  ]
+}
+```
+
+- **theme**: ryhmä (esim. *kosmos*, *biologia*, *ihmiskunta*, *historia*, *moderni teknologia*).  
+- **label**: tapahtuman nimi.  
+- **year**: ihmisen luettava muoto (esim. “3.8 mrd v”).  
+- **time_years**: numeerinen arvo vuosina.  
+- **log**: log₁₀(Δt) nopeampaa renderöintiä varten.  
+- **author/ref/comments**: lisätietokenttiä lähteille ja huomioille.  
+
+### Editorin kehitys
+
+Projektin rinnalla on kokeiltu **editoria**, jonka avulla tapahtumia voi lisätä ja muokata ilman manuaalista JSON-käsittelyä.  
+- Käyttöliittymä kenttien (label, year, theme, kommentit) muokkaamiseen.  
+- Teemoittainen ryhmittely.  
+- Mahdollisuus tallentaa muutokset takaisin `eventsDB.json`:iin.  
+
+Editorin kehitys on erillinen kokeiluversio, mutta sen tarkoitus on helpottaa datan laajentamista tulevaisuudessa ja vähentää käsin tehtäviä virheitä.  
+
+## Editorin esikatselu
+
+Alla esimerkki editorista, jolla voi muokata ja tallentaa `eventsDB.json`-tiedostoa.
+
+![EventsDB editor](assets/tapahtumaeditoriscreen.png)
 
 ## Lisenssi
 
